@@ -44,7 +44,8 @@ defmodule Rules do
   require Logger
 
   def add_to(engine) do 
-    :seresye.add_rule(engine, {:'Elixir.Rules', :abv_categorise})
+    :seresye.add_rules(engine, [{:'Elixir.Rules', :abv_categorise},
+                                {:'Elixir.Rules', :remove_abv_categorise}])
   end
   
   def abv_categorise(
@@ -54,6 +55,17 @@ defmodule Rules do
   when abvLower <= abv and abv <= abvUpper do
     Logger.debug("Expert thinks #{beerName} could be a #{styleName}.")
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
+  end
+
+  def remove_abv_categorise(
+    engine,
+    {:beer, beerName, {:abv, abv}}, 
+    {:beer_style, styleNumber, styleName, {:abv, abvLower, abvUpper}},
+    {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
+  when abv < abvLower or abvUpper < abv do
+      Logger.debug("Expert no longer thinks #{beerName} could be a #{styleName} as ABV #{abv} is not between #{abvLower} and #{abvUpper}.")
+      :seresye_engine.retract(engine, [{:beer_match, beerName, {:beer_style, styleNumber, styleName}}])
+      engine
   end
 
 end

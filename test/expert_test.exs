@@ -24,4 +24,12 @@ defmodule ExpertTest do
     assert expected_style == Expert.ask 'Boiler Room'
   end
 
+  test "tell expert new info about beer to narrow possibilities" do
+    expected_style = []
+
+    Expert.tell 'Boiler Room', {:abv, 2.0}
+
+    assert expected_style == Expert.ask 'Boiler Room'
+  end
+
 end
