@@ -8,6 +8,10 @@ defmodule Expert do
     Rules.add_to(@engine)
   end
 
+  def stop do
+    :ok = :seresye.stop(@engine)
+  end
+
   def tell(beer_name, facts) when is_list(facts) do
     for fact <- facts, do: tell(beer_name, fact)
   end
@@ -17,7 +21,7 @@ defmodule Expert do
   end
 
   def ask(beer_name) do
-    :seresye.assert(@engine, {:beer, beer_name, {:beer_style, :'_', :'_'}})
+    :seresye.query_kb(@engine, {:beer_match, beer_name, :'_'})
   end
   
 end
@@ -37,12 +41,10 @@ defmodule Facts do
 end
 
 defmodule Rules do
-
   require Logger
 
   def add_to(engine) do 
     :seresye.add_rule(engine, {:'Elixir.Rules', :abv_categorise})
-    :seresye.add_rule(engine, {:'Elixir.Rules', :mother})
   end
   
   def abv_categorise(
@@ -51,10 +53,7 @@ defmodule Rules do
     {:beer_style, styleNumber, styleName, {:abv, abvLower, abvUpper}}) 
   when abvLower <= abv and abv <= abvUpper do
     Logger.debug("Expert thinks #{beerName} could be a #{styleName}.")
-    :seresye.assert(engine, {:lol, 'wow'})
+    :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
   end
-
-  def mother(engine, {:female, x}, {:parent, x, y}), 
-    do: :seresye.assert(engine, {:mother, x, y})
 
 end
