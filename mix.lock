@@ -1,0 +1,4 @@
+%{"edown": {:git, "git://github.com/esl/edown.git", "4d18dc4bec89c20c0ba8cab6884ce690ca606f4a", [ref: "HEAD"]},
+  "erlware_commons": {:git, "https://github.com/erlware/erlware_commons.git", "cbe494b1cb1dcacf1926a3e1261a1161e5d2c050", [branch: "master"]},
+  "parse_trans": {:git, "https://github.com/esl/parse_trans.git", "763462825e4ce4660d43e6511078489ea50cdeca", [branch: "master"]},
+  "seresye": {:git, "https://github.com/afiniate/seresye.git", "1e124c091a782ddb5a293627101408800e1adce4", []}}
