@@ -17,11 +17,20 @@ defmodule Expert do
   end
 
   def tell(beer_name, fact) when is_tuple(fact) do
+    remove_existing(beer_name, fact)
     :seresye.assert(@engine, {:beer, beer_name, fact})
   end
 
   def ask(beer_name) do
     :seresye.query_kb(@engine, {:beer_match, beer_name, :'_'})
+  end
+
+  defp remove_existing(beer_name, {key, value}) do
+    existing_facts = :seresye.query_kb(@engine, {:beer, beer_name, :'_'}) 
+
+    for old_fact <- existing_facts, {:beer, _, {key, _}} = old_fact do
+      :seresye.retract(@engine, old_fact)
+    end
   end
   
 end
@@ -30,31 +39,44 @@ defmodule Rules do
   require Logger
 
   def add_to(engine) do 
-    :seresye.add_rules(engine, [{:'Elixir.Rules', :abv_categorise},
-                                {:'Elixir.Rules', :ibu_categorise}])
+    :seresye.add_rules(engine, [
+      {:'Elixir.Rules', :abv_categorise},
+      {:'Elixir.Rules', :ibu_categorise}])
   end
-  
 
   def abv_categorise(
     engine,
     {:beer, beerName, {:abv, abv}}, 
     {:beer_style, styleNumber, styleName, {:abv, abvLower, abvUpper}}) 
   when abvLower <= abv and abv <= abvUpper do
-    Logger.debug("Expert thinks #{beerName} could be a #{styleName} as abv #{abv} is between #{abvLower} & #{abvUpper}")
+    Logger.debug("abv_categorise => Expert thinks #{beerName} could be a #{styleName} as abv #{abv} is between #{abvLower} & #{abvUpper}")
+
+    existing_beer_facts = :seresye_engine.query_kb(engine, {:beer, beerName, :'_'})
+    Logger.debug("Existing facts for beer #{beerName} count #{Enum.count(existing_beer_facts)}")
+
+    existing_beer_matches = :seresye_engine.query_kb(engine, {:beer_match, beerName, :'_'})
+    Logger.debug("Existing beer_matches #{beerName} count #{Enum.count(existing_beer_matches)}")
 
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
   end
-
 
   def ibu_categorise(
     engine,
     {:beer, beerName, {:ibu, ibu}}, 
     {:beer_style, styleNumber, styleName, {:ibu, ibuLower, ibuUpper}}) 
   when ibuLower <= ibu and ibu <= ibuUpper do
-    Logger.debug("Expert thinks #{beerName} could be a #{styleName} as ibu #{ibu} is between #{ibuLower} & #{ibuUpper}")
+    Logger.debug("ibu_categorise => Expert thinks #{beerName} could be a #{styleName} as ibu #{ibu} is between #{ibuLower} & #{ibuUpper}")
 
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
-    engine
+    
+    # revoke beer_match if does not meet new ibu
+
+    # existing_beer_facts = :seresye_engine.query_kb(engine, {:beer, beerName, :'_'})
+    # Logger.debug("Existing facts for beer #{beerName} count #{Enum.count(existing_beer_facts)}")
+
+    # existing_beer_matches = :seresye_engine.query_kb(engine, {:beer_match, beerName, :'_'})
+    # Logger.debug("Existing beer_matches #{beerName} count #{Enum.count(existing_beer_matches)}")
+
   end
 
 end

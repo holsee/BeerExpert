@@ -27,11 +27,25 @@ defmodule ExpertTest do
   end
 
   test "tell expert new info about beer to narrow possibilities" do
-    expected_style = []
+    expected_style = [{:beer_match, 'Boiler Room', {:beer_style, 1, 'Berliner Weisse'}}]
 
-    Expert.tell 'Boiler Room', {:abv, 2.0}
+    Expert.tell 'Boiler Room', {:abv, 2.9}
+    Expert.tell 'Boiler Room', {:ibu, 7}
 
     assert expected_style == Expert.ask 'Boiler Room'
   end
+
+  test "tell expert new info about beer should remove existing info if provided" do
+    expected_beer_fact = [{:beer, 'Boiler Room', {:ibu, 7}}]
+
+    Expert.tell 'Boiler Room', {:ibu, 6}
+    Expert.tell 'Boiler Room', {:ibu, 7}
+
+    ibu_facts = :seresye.query_kb(@engine, {:beer, 'Boiler Room', :'_'})
+
+    assert expected_beer_fact == ibu_facts
+  end
+
+
 
 end
