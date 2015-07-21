@@ -17,18 +17,62 @@ defmodule Expert do
   end
 
   def tell(beer_name, fact) when is_tuple(fact) do
+    # Load prior knowledge about given beer
+    existing_facts = :seresye.query_kb(@engine, {:beer, beer_name, :'_'})
+    :io.format("existing_facts: ~p\n", [existing_facts])
+
+    # Remove existing facts matching given key
     remove_existing(beer_name, fact)
+
+    # Find out what Expert has already figured out to be a match when last fact added
+    existing_matches = :seresye.query_kb(@engine, {:beer_match, beer_name, :'_'})
+    :io.format("existing_matches: ~p\n", [existing_matches])
+
+    # Remove them from the engine as we are going to generate new matches
+    remove_exisitng_matches(beer_name)
+
+    # Tell Expert about new fact, which may generate new matches
     :seresye.assert(@engine, {:beer, beer_name, fact})
+
+    # If this was the first fact, then all matches are valid
+    # Otherwise we need to find the intersection of the results like so:
+    if(Enum.count(existing_facts) > 0) do
+        # Find the new matches, from last fact execution
+        new_matches = :seresye.query_kb(@engine, {:beer_match, beer_name, :'_'})
+        :io.format("new_matches: ~p\n", [new_matches])
+        
+        # Remove them as we can now refine them base on existing matches from other facts
+        remove_exisitng_matches(beer_name)
+        
+        # We intersect existing matches against the new matches
+        e = Enum.into(existing_matches, HashSet.new)
+        n = Enum.into(new_matches, HashSet.new)
+        r = Set.intersection(e, n)
+
+        # Store them in the engine!
+        for new <- r, 
+            do: :seresye.assert(@engine, new)
+    end
   end
 
   def ask(beer_name) do
     :seresye.query_kb(@engine, {:beer_match, beer_name, :'_'})
   end
 
+  defp remove_exisitng_matches(beer_name) do
+    matches = :seresye.query_kb(@engine, {:beer_match, beer_name, :'_'})
+
+    for old_match <- matches do
+      :io.format("retract existing match: ~p\n", [old_match])
+      :seresye.retract(@engine, old_match)
+    end
+  end
+
   defp remove_existing(beer_name, {key, value}) do
     existing_facts = :seresye.query_kb(@engine, {:beer, beer_name, :'_'}) 
 
     for old_fact <- existing_facts, {:beer, _, {key, _}} = old_fact do
+      :io.format("retracting fact: ~p\n", [old_fact])
       :seresye.retract(@engine, old_fact)
     end
   end
@@ -51,12 +95,6 @@ defmodule Rules do
   when abvLower <= abv and abv <= abvUpper do
     Logger.debug("abv_categorise => Expert thinks #{beerName} could be a #{styleName} as abv #{abv} is between #{abvLower} & #{abvUpper}")
 
-    existing_beer_facts = :seresye_engine.query_kb(engine, {:beer, beerName, :'_'})
-    Logger.debug("Existing facts for beer #{beerName} count #{Enum.count(existing_beer_facts)}")
-
-    existing_beer_matches = :seresye_engine.query_kb(engine, {:beer_match, beerName, :'_'})
-    Logger.debug("Existing beer_matches #{beerName} count #{Enum.count(existing_beer_matches)}")
-
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
   end
 
@@ -68,15 +106,6 @@ defmodule Rules do
     Logger.debug("ibu_categorise => Expert thinks #{beerName} could be a #{styleName} as ibu #{ibu} is between #{ibuLower} & #{ibuUpper}")
 
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
-    
-    # revoke beer_match if does not meet new ibu
-
-    # existing_beer_facts = :seresye_engine.query_kb(engine, {:beer, beerName, :'_'})
-    # Logger.debug("Existing facts for beer #{beerName} count #{Enum.count(existing_beer_facts)}")
-
-    # existing_beer_matches = :seresye_engine.query_kb(engine, {:beer_match, beerName, :'_'})
-    # Logger.debug("Existing beer_matches #{beerName} count #{Enum.count(existing_beer_matches)}")
-
   end
 
 end

@@ -46,6 +46,4 @@ defmodule ExpertTest do
     assert expected_beer_fact == ibu_facts
   end
 
-
-
 end
