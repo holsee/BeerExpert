@@ -40,7 +40,7 @@ defmodule Expert do
         # Find the new matches, from last fact execution
         new_matches = :seresye.query_kb(@engine, {:beer_match, beer_name, :'_'})
         :io.format("new_matches: ~p\n", [new_matches])
-        
+
         # Remove them as we can now refine them base on existing matches from other facts
         remove_exisitng_matches(beer_name)
         
@@ -85,7 +85,8 @@ defmodule Rules do
   def add_to(engine) do 
     :seresye.add_rules(engine, [
       {:'Elixir.Rules', :abv_categorise},
-      {:'Elixir.Rules', :ibu_categorise}])
+      {:'Elixir.Rules', :ibu_categorise},
+      {:'Elixir.Rules', :beer_category}])
   end
 
   def abv_categorise(
@@ -104,6 +105,15 @@ defmodule Rules do
     {:beer_style, styleNumber, styleName, {:ibu, ibuLower, ibuUpper}}) 
   when ibuLower <= ibu and ibu <= ibuUpper do
     Logger.debug("ibu_categorise => Expert thinks #{beerName} could be a #{styleName} as ibu #{ibu} is between #{ibuLower} & #{ibuUpper}")
+
+    :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
+  end
+
+  def beer_category(
+    engine,
+    {:beer, beerName, {:category, category}}, 
+    {:beer_style, styleNumber, styleName, {:catgeory, category}}) do
+    Logger.debug("ibu_categorise => Expert thinks #{beerName} could be a #{styleName} as category #{category} is a match")
 
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
   end
@@ -471,7 +481,7 @@ defmodule Facts do
     {:beer_style, 50, 'Russian Imperial', {:srm, 40, 100}},
     {:beer_style, 50, 'Russian Imperial', {:wiki, 'http://en.wikipedia.org/wiki/Russian_Imperial_Stout'}},
 
-    {:beer_style, 23, 'German Pilsner', {:catgeory, "Ale"}},
+    {:beer_style, 23, 'German Pilsner', {:catgeory, "Lager"}},
     {:beer_style, 23, 'German Pilsner', {:sub_category, "Pilsner"}},
     {:beer_style, 23, 'German Pilsner', {:original_gravity, 1.044, 1.050}},
     {:beer_style, 23, 'German Pilsner', {:final_gravity, 1.006, 1.012}},
@@ -480,7 +490,7 @@ defmodule Facts do
     {:beer_style, 23, 'German Pilsner', {:srm, 2, 4}},
     {:beer_style, 23, 'German Pilsner', {:wiki, 'http://beeradvocate.com/articles/216'}},
 
-    {:beer_style, 37, 'Bohemian Pilsner', {:catgeory, "Ale"}},
+    {:beer_style, 37, 'Bohemian Pilsner', {:catgeory, "Lager"}},
     {:beer_style, 37, 'Bohemian Pilsner', {:sub_category, "Pilsner"}},
     {:beer_style, 37, 'Bohemian Pilsner', {:original_gravity, 1.044, 1.056}},
     {:beer_style, 37, 'Bohemian Pilsner', {:final_gravity, 1.014, 1.020}},
@@ -489,7 +499,7 @@ defmodule Facts do
     {:beer_style, 37, 'Bohemian Pilsner', {:srm, 3, 5}},
     {:beer_style, 37, 'Bohemian Pilsner', {:wiki, 'http://en.wikipedia.org/wiki/Pilsner'}},
 
-    {:beer_style, 51, 'American Pilsner', {:catgeory, "Ale"}},
+    {:beer_style, 51, 'American Pilsner', {:catgeory, "Lager"}},
     {:beer_style, 51, 'American Pilsner', {:sub_category, "Pilsner"}},
     {:beer_style, 51, 'American Pilsner', {:original_gravity, 1.045, 1.060}},
     {:beer_style, 51, 'American Pilsner', {:final_gravity, 1.012, 1.018}},
