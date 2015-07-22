@@ -46,12 +46,21 @@ defmodule ExpertTest do
     assert expected_beer_fact == ibu_facts
   end
 
-  test "tell expert beer is an ale, it should narrow down to only ales" do
+  test "tell expert beer is in ale category, it should narrow down to only ales" do
     Expert.tell 'Holsee Ale', {:category, "Ale"}
 
     holsee_ale_matches = Expert.ask 'Holsee Ale'
 
     assert 39 == Enum.count(holsee_ale_matches) 
+  end
+
+
+  test "tell expert beer is an pilsner sub category, it should narrow down to only pilsners" do
+    Expert.tell 'Holsee Pilsner', {:sub_category, "Pilsner"}
+
+    holsee_ale_matches = Expert.ask 'Holsee Pilsner'
+
+    assert 3 == Enum.count(holsee_ale_matches) 
   end
 
 end

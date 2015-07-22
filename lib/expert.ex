@@ -84,12 +84,13 @@ defmodule Rules do
 
   def add_to(engine) do 
     :seresye.add_rules(engine, [
-      {:'Elixir.Rules', :abv_categorise},
-      {:'Elixir.Rules', :ibu_categorise},
-      {:'Elixir.Rules', :beer_category}])
+      {:'Elixir.Rules', :abv_rule},
+      {:'Elixir.Rules', :ibu_rule},
+      {:'Elixir.Rules', :category_rule},
+      {:'Elixir.Rules', :sub_category_rule}])
   end
 
-  def abv_categorise(
+  def abv_rule(
     engine,
     {:beer, beerName, {:abv, abv}}, 
     {:beer_style, styleNumber, styleName, {:abv, abvLower, abvUpper}}) 
@@ -99,7 +100,7 @@ defmodule Rules do
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
   end
 
-  def ibu_categorise(
+  def ibu_rule(
     engine,
     {:beer, beerName, {:ibu, ibu}}, 
     {:beer_style, styleNumber, styleName, {:ibu, ibuLower, ibuUpper}}) 
@@ -109,11 +110,20 @@ defmodule Rules do
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
   end
 
-  def beer_category(
+  def category_rule(
     engine,
     {:beer, beerName, {:category, category}}, 
     {:beer_style, styleNumber, styleName, {:catgeory, category}}) do
-    Logger.debug("ibu_categorise => Expert thinks #{beerName} could be a #{styleName} as category #{category} is a match")
+    Logger.debug("beer_category => Expert thinks #{beerName} could be a #{styleName} as category #{category} is a match")
+
+    :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
+  end
+
+  def sub_category_rule(
+    engine,
+    {:beer, beerName, {:sub_category, sub_category}}, 
+    {:beer_style, styleNumber, styleName, {:sub_category, sub_category}}) do
+    Logger.debug("beer_category => Expert thinks #{beerName} could be a #{styleName} as subcategory #{sub_category} is a match")
 
     :seresye_engine.assert(engine, {:beer_match, beerName, {:beer_style, styleNumber, styleName}})
   end
